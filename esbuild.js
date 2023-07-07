@@ -7,9 +7,7 @@ esbuild
         bundle: true,
         minify:true,
         plugins: [sassPlugin()],
-        loader:{
-            ".scss":"scss",
-        }
+
     })
     .then(() => console.log("⚡ Build complete! ⚡"))
     .catch(() => process.exit(1));
