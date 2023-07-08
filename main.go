@@ -5,8 +5,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
-	"github.com/ramnath-1998/myblog/controllers"
-	"github.com/ramnath-1998/myblog/initializers"
+	"github.com/ramnath-1998/poorhouse/controllers"
+	"github.com/ramnath-1998/poorhouse/initializers"
 )
 
 func init() {

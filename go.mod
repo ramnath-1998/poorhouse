@@ -1,4 +1,4 @@
-module github.com/ramnath-1998/myblog
+module github.com/ramnath-1998/poorhouse
 
 go 1.19
 
