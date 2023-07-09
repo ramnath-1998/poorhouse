@@ -1,9 +1,10 @@
 import React from 'react'
 import Table from 'react-bootstrap/Table';
 
-export const NewsTable = () => {
+export const NewsTable = (props) => {
   return (
-    <div>  <Table striped>
+    <div>
+    <Table striped>
     <tbody>
       <tr>
       <td>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor.</td>
