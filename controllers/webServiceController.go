@@ -1,54 +1,31 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 
-	"github.com/gorilla/websocket"
+	"github.com/gofiber/websocket/v2"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
+var clients = make(map[*websocket.Conn]bool) // Connected clients
 
-func WsEndpoint(w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-
-	// upgrade this connection to a WebSocket
-	// connection
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-	}
-
-	log.Println("Client Connected")
-	err = ws.WriteMessage(1, []byte("Hi Client!"))
-
-	if err != nil {
-		log.Println(err)
-	}
-	// listen indefinitely for new messages coming
-	// through on our WebSocket connection
-	Reader(ws)
-}
-
-func Reader(conn *websocket.Conn) {
+func HandleWebSocket(c *websocket.Conn) {
+	var (
+		mt  int
+		msg []byte
+		err error
+	)
+	log.Println(clients)
 	for {
-		// read in a message
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			return
+		if mt, msg, err = c.ReadMessage(); err != nil {
+			log.Println("read:", err)
+			break
 		}
-		// print out that message for clarity
-		fmt.Println(string(p))
+		log.Printf("recv: %s", msg)
+		log.Println("Hi")
 
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			log.Println(err)
-			return
+		if err = c.WriteMessage(mt, []byte("First Message")); err != nil {
+			log.Println("write:", err)
+			break
 		}
-
 	}
 }

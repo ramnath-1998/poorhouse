@@ -4,12 +4,12 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
+	"github.com/gofiber/websocket/v2"
 	"github.com/ramnath-1998/poorhouse/controllers"
 	"github.com/ramnath-1998/poorhouse/initializers"
 )
@@ -73,13 +73,12 @@ func main() {
 	}
 
 	// Handling Backend Routes
-	http.HandleFunc("/ws", controllers.WsEndpoint)
-
+	// websocket route
 	app.Static("/", "./public")
+	app.Get("/ws", websocket.New(controllers.HandleWebSocket))
 
 	// Start app
 	app.Listen(":" + os.Getenv("PORT"))
-
 	fmt.Print("Its Running!")
 
 }

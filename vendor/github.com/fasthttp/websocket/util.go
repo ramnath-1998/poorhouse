@@ -5,6 +5,7 @@
 package websocket
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha1"
 	"encoding/base64"
@@ -19,6 +20,13 @@ var keyGUID = []byte("258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
 func computeAcceptKey(challengeKey string) string {
 	h := sha1.New()
 	h.Write([]byte(challengeKey))
+	h.Write(keyGUID)
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+}
+
+func computeAcceptKeyBytes(challengeKey []byte) string {
+	h := sha1.New()
+	h.Write(challengeKey)
 	h.Write(keyGUID)
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
@@ -140,7 +148,8 @@ func nextToken(s string) (token, rest string) {
 // and the string following the token or quoted string.
 func nextTokenOrQuoted(s string) (value string, rest string) {
 	if !strings.HasPrefix(s, "\"") {
-		return nextToken(s)
+		token, rest := nextToken(s)
+		return token, rest
 	}
 	s = s[1:]
 	for i := 0; i < len(s); i++ {
@@ -199,26 +208,34 @@ func equalASCIIFold(s, t string) bool {
 
 // tokenListContainsValue returns true if the 1#token header with the given
 // name contains a token equal to value with ASCII case folding.
+func tokenContainsValue(s string, value string) bool {
+	for {
+		var t string
+		t, s = nextToken(skipSpace(s))
+		if t == "" {
+			return false
+		}
+		s = skipSpace(s)
+		if s != "" && s[0] != ',' {
+			return false
+		}
+		if equalASCIIFold(t, value) {
+			return true
+		}
+		if s == "" {
+			return false
+		}
+
+		s = s[1:]
+	}
+}
+
+// tokenListContainsValue returns true if the 1#token header with the given
+// name contains token.
 func tokenListContainsValue(header http.Header, name string, value string) bool {
-headers:
 	for _, s := range header[name] {
-		for {
-			var t string
-			t, s = nextToken(skipSpace(s))
-			if t == "" {
-				continue headers
-			}
-			s = skipSpace(s)
-			if s != "" && s[0] != ',' {
-				continue headers
-			}
-			if equalASCIIFold(t, value) {
-				return true
-			}
-			if s == "" {
-				continue headers
-			}
-			s = s[1:]
+		if tokenContainsValue(s, value) {
+			return true
 		}
 	}
 	return false
@@ -280,4 +297,33 @@ headers:
 		}
 	}
 	return result
+}
+
+// isValidChallengeKey checks if the argument meets RFC6455 specification.
+func isValidChallengeKey(s string) bool {
+	// From RFC6455:
+	//
+	// A |Sec-WebSocket-Key| header field with a base64-encoded (see
+	// Section 4 of [RFC4648]) value that, when decoded, is 16 bytes in
+	// length.
+
+	if s == "" {
+		return false
+	}
+	decoded, err := base64.StdEncoding.DecodeString(s)
+	return err == nil && len(decoded) == 16
+}
+
+// parseDataHeader returns a list with values if header value is comma-separated
+func parseDataHeader(headerValue []byte) [][]byte {
+	h := bytes.TrimSpace(headerValue)
+	if bytes.Equal(h, []byte("")) {
+		return nil
+	}
+
+	values := bytes.Split(h, []byte(","))
+	for i := range values {
+		values[i] = bytes.TrimSpace(values[i])
+	}
+	return values
 }

@@ -9,6 +9,7 @@ import { NewsPopUp } from '../components/NewsPopUp';
 export const Home = () => {
   return (
     <><BlogNavbar></BlogNavbar>
+    <NewsTable url="ws://localhost:3000/ws"></NewsTable>
     </>
 
   )
